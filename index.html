@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="en" class="antialiased">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AURELIUS | Official Boutique</title>
+
+  <!-- Luxury Typography -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;700&display=swap" rel="stylesheet">
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- GSAP, ScrollTrigger, and Lenis -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+  <script src="https://unpkg.com/@studio-freight/lenis@1.0.34/dist/lenis.min.js"></script>
+
+  <!-- Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+  <style>
+    /* Core Setup */
+    :root { --bg: #050505; --gold: #C9A227; --gold-light: #E5C354; }
+    body { background-color: var(--bg); color: white; margin: 0; overflow-x: hidden; font-family: 'Inter', sans-serif; cursor: none; }
+    ::selection { background-color: var(--gold); color: #000; }
+    
+    /* Custom Cursor */
+    #cursor { position: fixed; top: 0; left: 0; width: 20px; height: 20px; background: white; border-radius: 50%; pointer-events: none; z-index: 9999; mix-blend-mode: difference; transform: translate(-50%, -50%); transition: width 0.3s, height 0.3s, background-color 0.3s; }
+    .hover-active #cursor { width: 60px; height: 60px; background: var(--gold); mix-blend-mode: normal; opacity: 0.8; }
+
+    /* Navigation Bar */
+    nav { position: fixed; top: 0; left: 0; width: 100%; padding: 1.5rem 5vw; display: flex; justify-content: space-between; align-items: center; z-index: 100; background: linear-gradient(to bottom, rgba(5,5,5,0.95) 0%, rgba(5,5,5,0) 100%); backdrop-filter: blur(8px); }
+    .nav-links { display: flex; gap: 3rem; font-size: 0.85rem; letter-spacing: 2px; text-transform: uppercase; font-weight: 700; }
+    .nav-links a, .nav-icons i { transition: color 0.3s; cursor: none; color: rgba(255,255,255,0.8); }
+    .nav-links a:hover, .nav-icons i:hover { color: var(--gold); }
+    .nav-icons { display: flex; gap: 2rem; font-size: 1.2rem; }
+
+    /* Preloader */
+    #preloader { position: fixed; inset: 0; background: var(--bg); z-index: 999; display: flex; justify-content: center; align-items: center; flex-direction: column; }
+    .loader-text { font-size: 5vw; font-weight: 300; letter-spacing: -0.02em; color: var(--gold); }
+    
+    /* Fixed WebGL/Canvas Background */
+    #canvas-container { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 0; pointer-events: none; }
+    canvas { display: block; width: 100%; height: 100%; object-fit: contain; }
+
+    /* Hero Branding */
+    #hero-brand { position: absolute; top: 15vh; left: 50%; transform: translateX(-50%); z-index: 10; text-align: center; width: 100%; pointer-events: none; }
+    #hero-brand h1 { font-size: clamp(4rem, 8vw, 10rem); font-weight: 700; letter-spacing: 0.1em; background: linear-gradient(to bottom, var(--gold-light), var(--gold), #7A6217); -webkit-background-clip: text; -webkit-text-fill-color: transparent; text-transform: uppercase; margin: 0; line-height: 1; }
+    #hero-brand p { color: rgba(255,255,255,0.7); letter-spacing: 4px; text-transform: uppercase; font-size: clamp(0.7rem, 2vw, 1rem); margin-top: 10px; }
+
+    /* Main Scroll Content */
+    main { position: relative; z-index: 10; }
+    .scroll-sequence { height: 400vh; position: relative; }
+    .beat { position: absolute; left: 0; width: 100%; height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center; opacity: 0; text-align: center; pointer-events: none; }
+    .beat h2 { font-size: clamp(2rem, 5vw, 4rem); font-weight: 700; letter-spacing: 0.05em; color: var(--gold); text-transform: uppercase; text-shadow: 0 4px 20px rgba(0,0,0,0.8); }
+    .beat p { color: rgba(255,255,255,0.8); letter-spacing: 2px; text-transform: uppercase; font-size: 0.9rem; margin-top: 10px; background: rgba(0,0,0,0.4); padding: 5px 15px; border-radius: 20px;}
+
+    /* Infinite Marquee */
+    .marquee { overflow: hidden; white-space: nowrap; padding: 2.5rem 0; background: var(--bg); border-top: 1px solid rgba(255,255,255,0.05); border-bottom: 1px solid rgba(255,255,255,0.05); position: relative; z-index: 20;}
+    .marquee-inner { display: inline-block; animation: marquee 20s linear infinite; font-size: 3.5rem; font-weight: 700; color: transparent; -webkit-text-stroke: 1px var(--gold); text-transform: uppercase; letter-spacing: 2px;}
+    @keyframes marquee { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
+
+    /* Bento Grid Shop */
+    .bento-section { background: var(--bg); padding: 15vh 5vw; position: relative; z-index: 20; }
+    .bento-grid { display: grid; grid-template-columns: repeat(1, 1fr); gap: 1.5rem; max-width: 1600px; margin: 0 auto; }
+    @media (min-width: 768px) { .bento-grid { grid-template-columns: repeat(4, 1fr); grid-auto-rows: 500px; } }
+    
+    .bento-card { background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 16px; padding: 2.5rem; backdrop-filter: blur(20px); transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1), background 0.4s, border-color 0.4s; display: flex; flex-direction: column; justify-content: space-between; overflow: hidden; cursor: none; position: relative; }
+    .bento-card:hover { transform: translateY(-10px); background: rgba(255, 255, 255, 0.05); border-color: rgba(201, 162, 39, 0.6); box-shadow: 0 20px 40px rgba(0,0,0,0.5); }
+    
+    .card-large { grid-column: span 1; }
+    @media (min-width: 768px) {
+      .card-large { grid-column: span 2; grid-row: span 2; }
+      .card-tall { grid-row: span 2; }
+    }
+
+    .watch-image { width: 100%; height: 250px; object-fit: cover; border-radius: 12px; margin-bottom: 1.5rem; transition: transform 0.5s; }
+    .card-large .watch-image { height: 450px; }
+    .bento-card:hover .watch-image { transform: scale(1.05); }
+
+    .magnetic-btn { display: inline-flex; justify-content: center; align-items: center; padding: 1rem 2rem; border: 1px solid var(--gold); color: var(--gold); border-radius: 50px; text-transform: uppercase; letter-spacing: 1.5px; font-size: 0.8rem; font-weight: 700; transition: all 0.3s ease; cursor: none; }
+    .magnetic-btn:hover { background: var(--gold); color: var(--bg); }
+
+    /* New: Brand Story Section */
+    .brand-story { background: var(--bg); padding: 12vh 5vw; position: relative; z-index: 20; text-align: center; border-top: 1px solid rgba(255,255,255,0.05); }
+    .story-container { max-width: 1000px; margin: 0 auto; padding: 4rem 2rem; background: rgba(255, 255, 255, 0.01); border: 1px solid rgba(255, 255, 255, 0.03); border-radius: 20px; backdrop-filter: blur(15px); }
+    
+    /* New: Reviews Section */
+    .reviews-section { background: var(--bg); padding: 10vh 5vw 15vh 5vw; position: relative; z-index: 20; border-top: 1px solid rgba(255,255,255,0.05); }
+    .reviews-grid { display: grid; grid-template-columns: 1fr; gap: 2rem; max-width: 1400px; margin: 0 auto; }
+    @media (min-width: 768px) { .reviews-grid { grid-template-columns: repeat(3, 1fr); } }
+    .review-card { background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 16px; padding: 3rem 2.5rem; transition: transform 0.4s, background 0.4s, border-color 0.4s; cursor: none; display: flex; flex-direction: column; justify-content: center; }
+    .review-card:hover { transform: translateY(-8px); background: rgba(255, 255, 255, 0.04); border-color: rgba(201, 162, 39, 0.4); }
+
+    /* Footer */
+    footer { background: #020202; padding: 10vh 5vw 5vh 5vw; position: relative; z-index: 20; border-top: 1px solid rgba(255,255,255,0.05); }
+    .footer-grid { display: grid; grid-template-columns: 1fr 1fr 1fr 2fr; gap: 3rem; margin-bottom: 5rem; }
+    @media (max-width: 768px) { .footer-grid { grid-template-columns: 1fr 1fr; gap: 2rem; } }
+    @media (max-width: 480px) { .footer-grid { grid-template-columns: 1fr; } }
+    footer h4 { color: var(--gold); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 1.5rem; font-size: 0.9rem; font-weight: 700; }
+    footer ul { list-style: none; padding: 0; margin: 0; }
+    footer ul li { margin-bottom: 0.8rem; }
+    footer ul li a { color: rgba(255,255,255,0.5); text-decoration: none; transition: color 0.3s; font-size: 0.85rem; cursor: none;}
+    footer ul li a:hover { color: white; }
+    .newsletter input { background: transparent; border: none; border-bottom: 1px solid rgba(255,255,255,0.3); padding: 0.8rem 0; color: white; width: 100%; outline: none; margin-bottom: 1.5rem; font-size: 0.9rem; transition: border-color 0.3s; }
+    .newsletter input:focus { border-bottom-color: var(--gold); }
+  </style>
+</head>
+<body>
+
+  <!-- Custom Cursor -->
+  <div id="cursor"></div>
+
+  <!-- Global Navigation -->
+  <nav class="magnetic-target">
+    <div class="text-xl font-bold tracking-[0.3em] text-white">AURELIUS</div>
+    <div class="nav-links hidden md:flex">
+      <a href="#sequence-container">Home</a>
+      <a href="#shop">The Collection</a>
+      <a href="#heritage">Heritage</a>
+    </div>
+    <div class="nav-icons">
+      <i class="fa-solid fa-magnifying-glass magnetic-target"></i>
+      <i class="fa-solid fa-cart-shopping magnetic-target"></i>
+    </div>
+  </nav>
+
+  <!-- Preloader -->
+  <div id="preloader">
+    <div class="loader-text" id="counter">0%</div>
+    <div id="error-log" style="color: red; font-size: 12px; margin-top: 10px; font-family: monospace;"></div>
+  </div>
+
+  <!-- Fixed WebGL/Canvas Background -->
+  <div id="canvas-container">
+    <canvas id="watch-canvas"></canvas>
+  </div>
+
+  <!-- Scrollable Content -->
+  <main>
+    <!-- 3D Assembly Scroll Sequence -->
+    <section class="scroll-sequence" id="sequence-container">
+      <div id="hero-brand">
+        <h1 class="magnetic-target">AURELIUS</h1>
+        <p>Swiss Engineering. Modern Mastery.</p>
+      </div>
+
+      <div class="beat" style="top: 100vh;" id="beat-1">
+        <h2>Time, Assembled</h2>
+        <p>A masterpiece engineered for the wrist.</p>
+      </div>
+      <div class="beat" style="top: 200vh;" id="beat-2">
+        <h2>The Caliber</h2>
+        <p>Hand-finished precision movement.</p>
+      </div>
+      <div class="beat" style="top: 300vh;" id="beat-3">
+        <h2>The Meridian</h2>
+        <p>Now assembled. Now yours.</p>
+      </div>
+    </section>
+
+    <!-- Infinite Marquee -->
+    <div class="marquee">
+      <div class="marquee-inner">
+        AURELIUS • LUXURY REIMAGINED • FREE GLOBAL SHIPPING • AURELIUS • LUXURY REIMAGINED • FREE GLOBAL SHIPPING • 
+      </div>
+    </div>
+
+    <!-- The 8-Watch E-Commerce Shop -->
+    <section class="bento-section" id="shop">
+      <div class="text-center mb-24 kinetic-header">
+        <h3 class="text-4xl md:text-5xl font-bold text-white mb-6 uppercase tracking-widest">The Full Collection</h3>
+        <p class="text-gray-400 uppercase tracking-[0.2em] text-sm">Crafted Without Compromise</p>
+      </div>
+
+      <div class="bento-grid">
+        
+        <!-- Watch 1: THE $100,000 HIGHLIGHT -->
+        <div class="bento-card card-large magnetic-target">
+          <div style="overflow: hidden; border-radius: 12px;">
+            <img src="blue-watch.png" alt="Aurelius Blue Sunburst" class="watch-image" onerror="this.style.display='none'">
+          </div>
+          <div>
+            <span class="text-[var(--gold)] text-xs tracking-[0.2em] uppercase font-bold">The Crown Jewel</span>
+            <h4 class="text-4xl font-light mt-4 text-white uppercase tracking-wider">Aurelius Sovereign</h4>
+            <p class="text-gray-400 mt-4 text-sm max-w-md leading-relaxed">Our ultimate masterpiece. A breathtaking blue sunburst dial encapsulated in flawless surgical-grade stainless steel. Powered by our proprietary automatic movement. Only 5 ever crafted.</p>
+          </div>
+          <div class="flex justify-between items-end mt-12">
+            <span class="text-4xl font-bold tabular-nums tracking-wide text-white">$100,000</span>
+            <a href="#" class="magnetic-btn">Secure Yours</a>
+          </div>
+        </div>
+
+        <!-- Watch 2: The Gold Version Placeholder -->
+        <div class="bento-card card-tall magnetic-target" style="background: linear-gradient(145deg, rgba(201, 162, 39, 0.08), rgba(0,0,0,0)); border-color: rgba(201,162,39,0.2);">
+          <div style="overflow: hidden; border-radius: 12px;">
+            <img src="gold-watch.png" alt="Aurelius Gold Version" class="watch-image" onerror="this.style.display='none'">
+          </div>
+          <div>
+            <span class="text-[var(--gold)] text-xs tracking-[0.2em] uppercase font-bold">Solid 18k</span>
+            <h4 class="text-3xl font-light mt-4 text-white uppercase tracking-wider">Aurelian Gold</h4>
+            <p class="text-gray-400 mt-4 text-sm leading-relaxed">Forged entirely in 18-karat yellow gold. A heavy, commanding presence designed for the elite.</p>
+          </div>
+          <div class="flex flex-col gap-6 mt-auto pt-8">
+            <span class="text-3xl font-light tabular-nums text-[var(--gold)] tracking-wide">$22,000</span>
+            <a href="#" class="magnetic-btn text-center" style="background: var(--gold); color: black;">Reserve</a>
+          </div>
+        </div>
+
+        <!-- Watch 3 -->
+        <div class="bento-card magnetic-target">
+          <div>
+            <span class="text-white/50 text-xs tracking-[0.2em] uppercase font-bold">Complication</span>
+            <h4 class="text-2xl font-light mt-3 text-white uppercase tracking-wider">Chronos</h4>
+            <p class="text-gray-400 mt-3 text-sm">Measure every second with absolute precision.</p>
+          </div>
+          <div class="flex justify-between items-end mt-8">
+            <span class="text-xl font-light tabular-nums text-white/90">$9,800</span>
+            <a href="#" class="magnetic-btn px-6 py-2">Buy</a>
+          </div>
+        </div>
+
+        <!-- Watch 4 -->
+        <div class="bento-card magnetic-target">
+          <div>
+            <span class="text-white/50 text-xs tracking-[0.2em] uppercase font-bold">Carbon Fiber</span>
+            <h4 class="text-2xl font-light mt-3 text-white uppercase tracking-wider">Nocturne</h4>
+            <p class="text-gray-400 mt-3 text-sm">Matte forged carbon. Stealth, weightless, aggressive.</p>
+          </div>
+          <div class="flex justify-between items-end mt-8">
+            <span class="text-xl font-light tabular-nums text-white/90">$8,100</span>
+            <a href="#" class="magnetic-btn px-6 py-2">Buy</a>
+          </div>
+        </div>
+
+        <!-- Watch 5: High End -->
+        <div class="bento-card card-tall magnetic-target">
+          <div>
+            <span class="text-[var(--gold)] text-xs tracking-[0.2em] uppercase font-bold">Masterpiece</span>
+            <h4 class="text-3xl font-light mt-4 text-white uppercase tracking-wider">Tourbillon</h4>
+            <p class="text-gray-400 mt-4 text-sm leading-relaxed">Defy gravity. An exposed tourbillon cage showcasing the absolute pinnacle of horological engineering.</p>
+          </div>
+          <div class="flex flex-col gap-6 mt-auto pt-8">
+            <span class="text-3xl font-light tabular-nums tracking-wide">$18,500</span>
+            <a href="#" class="magnetic-btn text-center w-full">Add to Cart</a>
+          </div>
+        </div>
+
+        <!-- Watch 6 -->
+        <div class="bento-card magnetic-target">
+          <div>
+            <span class="text-[var(--gold)] text-xs tracking-[0.2em] uppercase font-bold">Precious Metal</span>
+            <h4 class="text-2xl font-light mt-3 text-white uppercase tracking-wider">Rose Gold</h4>
+            <p class="text-gray-400 mt-3 text-sm">Warm 18k rose gold alloyed with flawless platinum.</p>
+          </div>
+          <div class="flex justify-between items-end mt-8">
+            <span class="text-xl font-light tabular-nums text-white/90">$24,500</span>
+            <a href="#" class="magnetic-btn px-6 py-2">Buy</a>
+          </div>
+        </div>
+
+        <!-- Watch 7 -->
+        <div class="bento-card magnetic-target">
+          <div>
+            <span class="text-white/50 text-xs tracking-[0.2em] uppercase font-bold">Classic</span>
+            <h4 class="text-2xl font-light mt-3 text-white uppercase tracking-wider">Platinum Horizon</h4>
+            <p class="text-gray-400 mt-3 text-sm">Understated luxury forged in pure 950 platinum.</p>
+          </div>
+          <div class="flex justify-between items-end mt-8">
+            <span class="text-xl font-light tabular-nums text-white/90">$12,000</span>
+            <a href="#" class="magnetic-btn px-6 py-2">Buy</a>
+          </div>
+        </div>
+
+        <!-- Watch 8 -->
+        <div class="bento-card magnetic-target">
+          <div>
+            <span class="text-white/50 text-xs tracking-[0.2em] uppercase font-bold">Tactical</span>
+            <h4 class="text-2xl font-light mt-3 text-white uppercase tracking-wider">Obsidian Stealth</h4>
+            <p class="text-gray-400 mt-3 text-sm">PVD-coated stainless steel with luminescent indices.</p>
+          </div>
+          <div class="flex justify-between items-end mt-8">
+            <span class="text-xl font-light tabular-nums text-white/90">$7,500</span>
+            <a href="#" class="magnetic-btn px-6 py-2">Buy</a>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- Brand Story Section -->
+    <section class="brand-story" id="heritage">
+      <div class="story-container magnetic-target">
+        <span class="text-[var(--gold)] text-xs tracking-[0.3em] uppercase font-bold mb-6 block">The Heritage</span>
+        <h3 class="text-4xl md:text-5xl font-light text-white mb-8 uppercase tracking-widest">Born from Precision</h3>
+        <p class="text-gray-400 text-sm md:text-base max-w-3xl mx-auto leading-relaxed mb-6">
+          Founded in the shadow of the Swiss Alps, Aurelius began with a singular, uncompromising vision: to distill time into its purest, most perfect form. Our master horologists dedicate hundreds of hours to hand-finishing every caliber, marrying traditional craftsmanship with avant-garde materials. An Aurelius is not merely worn; it is a legacy inherited.
+        </p>
+        <p class="text-gray-400 text-sm md:text-base max-w-3xl mx-auto leading-relaxed">
+          Every gear, every bridge, and every pivot is subjected to agonizing scrutiny before earning our crest. We do not mass-produce; we curate moments in time for the world's most discerning individuals.
+        </p>
+      </div>
+    </section>
+
+    <!-- Reviews Section -->
+    <section class="reviews-section" id="reviews">
+      <div class="text-center mb-16">
+        <h3 class="text-3xl md:text-4xl font-light text-white mb-4 uppercase tracking-widest">Client Testimonials</h3>
+        <p class="text-[var(--gold)] uppercase tracking-[0.2em] text-xs">The Verdict of the Elite</p>
+      </div>
+      <div class="reviews-grid">
+        <div class="review-card magnetic-target">
+          <div class="text-[var(--gold)] mb-6 text-sm">
+            <i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i>
+          </div>
+          <p class="text-gray-300 text-sm italic mb-8 leading-relaxed">"The Sovereign is an absolute masterpiece. The sweeping seconds hand and the mesmerizing sunburst dial command attention in every boardroom I enter."</p>
+          <h5 class="text-white text-xs uppercase tracking-widest font-bold">— Arthur W., Verified Owner</h5>
+        </div>
+        
+        <div class="review-card magnetic-target">
+          <div class="text-[var(--gold)] mb-6 text-sm">
+            <i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i>
+          </div>
+          <p class="text-gray-300 text-sm italic mb-8 leading-relaxed">"I have collected luxury timepieces for two decades. The mechanical finishing on the Tourbillon rivals maisons that have existed for centuries."</p>
+          <h5 class="text-white text-xs uppercase tracking-widest font-bold">— James L., Verified Owner</h5>
+        </div>
+        
+        <div class="review-card magnetic-target">
+          <div class="text-[var(--gold)] mb-6 text-sm">
+            <i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i>
+          </div>
+          <p class="text-gray-300 text-sm italic mb-8 leading-relaxed">"Weightless on the wrist, yet visually aggressive. The forged carbon Nocturne has quickly become my daily companion."</p>
+          <h5 class="text-white text-xs uppercase tracking-widest font-bold">— Marcus V., Verified Owner</h5>
+        </div>
+      </div>
+    </section>
+
+    <!-- Professional Footer -->
+    <footer>
+      <div class="footer-grid">
+        <div>
+          <h4>Collections</h4>
+          <ul>
+            <li><a href="#" class="magnetic-target">The Meridian</a></li>
+            <li><a href="#" class="magnetic-target">The Astralis</a></li>
+            <li><a href="#" class="magnetic-target">Limited Editions</a></li>
+            <li><a href="#" class="magnetic-target">Straps & Accessories</a></li>
+          </ul>
+        </div>
+        <div>
+          <h4>Support</h4>
+          <ul>
+            <li><a href="#" class="magnetic-target">Client Care</a></li>
+            <li><a href="#" class="magnetic-target">Service & Repairs</a></li>
+            <li><a href="#" class="magnetic-target">Warranty Information</a></li>
+            <li><a href="#" class="magnetic-target">Shipping & Returns</a></li>
+          </ul>
+        </div>
+        <div>
+          <h4>Maison Aurelius</h4>
+          <ul>
+            <li><a href="#heritage" class="magnetic-target">Our Heritage</a></li>
+            <li><a href="#" class="magnetic-target">The Manufacture</a></li>
+            <li><a href="#" class="magnetic-target">Boutiques</a></li>
+            <li><a href="#" class="magnetic-target">Careers</a></li>
+          </ul>
+        </div>
+        <div class="newsletter">
+          <h4>Join The Inner Circle</h4>
+          <p class="text-white/50 text-sm mb-6 leading-relaxed">Subscribe for exclusive access to limited allocations and private events.</p>
+          <input type="email" placeholder="Email Address" class="magnetic-target">
+          <button class="magnetic-btn w-full mt-2">Subscribe</button>
+        </div>
+      </div>
+      <div class="flex flex-col md:flex-row justify-between items-center border-t border-white/10 pt-8 text-white/30 text-xs tracking-widest uppercase">
+        <p class="mb-4 md:mb-0">&copy; 2026 AURELIUS WATCHES. ALL RIGHTS RESERVED.</p>
+        <div class="flex gap-6 text-lg">
+          <i class="fa-brands fa-instagram magnetic-target hover:text-white transition-colors cursor-none"></i>
+          <i class="fa-brands fa-x-twitter magnetic-target hover:text-white transition-colors cursor-none"></i>
+        </div>
+      </div>
+    </footer>
+  </main>
+
+  <script>
+    gsap.registerPlugin(ScrollTrigger);
+
+    // 1. Lenis Smooth Scrolling Setup
+    const lenis = new Lenis({ 
+      duration: 1.2, 
+      easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)), 
+      direction: 'vertical', 
+      gestureDirection: 'vertical', 
+      smooth: true, 
+      mouseMultiplier: 1 
+    });
+    lenis.on('scroll', ScrollTrigger.update);
+    gsap.ticker.add((time) => { lenis.raf(time * 1000); });
+    gsap.ticker.lagSmoothing(0);
+
+    // 2. Custom Cursor & Magnetic Logic
+    const cursor = document.getElementById('cursor');
+    window.addEventListener('mousemove', (e) => { 
+      gsap.to(cursor, { x: e.clientX, y: e.clientY, duration: 0.15, ease: "power2.out" }); 
+    });
+    
+    document.querySelectorAll('.magnetic-target, .magnetic-btn').forEach(el => {
+      el.addEventListener('mouseenter', () => document.body.classList.add('hover-active'));
+      el.addEventListener('mouseleave', () => document.body.classList.remove('hover-active'));
+    });
+
+    document.querySelectorAll('.magnetic-btn, .nav-links a, .nav-icons i').forEach(btn => {
+      btn.addEventListener('mousemove', (e) => {
+        const rect = btn.getBoundingClientRect();
+        const x = e.clientX - rect.left - rect.width / 2;
+        const y = e.clientY - rect.top - rect.height / 2;
+        gsap.to(btn, { x: x * 0.3, y: y * 0.3, duration: 0.3, ease: "power2.out" });
+      });
+      btn.addEventListener('mouseleave', () => { 
+        gsap.to(btn, { x: 0, y: 0, duration: 0.5, ease: "elastic.out(1, 0.3)" }); 
+      });
+    });
+
+    // 3. Image Sequence Loader (144 frames)
+    const canvas = document.getElementById('watch-canvas');
+    const ctx = canvas.getContext('2d', { alpha: false }); 
+    const images = [];
+    const TOTAL_FRAMES = 144;
+    let imagesLoaded = 0;
+
+    for (let i = 0; i < TOTAL_FRAMES; i++) {
+      const img = new Image();
+      const frameNum = String(i).padStart(3, '0');
+      
+      const possiblePaths = [
+        `frames/frame_${frameNum}_delay-0.04s.gif`,
+        `frames/frame_${frameNum}_delay-0.05s.gif`,
+        `frames/frame_${frameNum}_delay-0.06s.gif`,
+        `frames/frame_${frameNum}_delay-0.04s.png`,
+        `frames/frame_${frameNum}_delay-0.05s.png`,
+        `frames/frame_${frameNum}_delay-0.06s.png`
+      ];
+      
+      let currentPathIndex = 0;
+      
+      const checkDone = () => {
+        imagesLoaded++; 
+        document.getElementById('counter').innerText = Math.floor((imagesLoaded / TOTAL_FRAMES) * 100) + '%';
+        if(imagesLoaded === TOTAL_FRAMES) initExperience(); 
+      };
+
+      img.onload = checkDone;
+      
+      img.onerror = () => {
+        currentPathIndex++;
+        if (currentPathIndex < possiblePaths.length) {
+          img.src = possiblePaths[currentPathIndex];
+        } else {
+          document.getElementById('error-log').innerHTML += `Frame ${frameNum} missing<br>`;
+          checkDone(); 
+        }
+      };
+      img.src = possiblePaths[0];
+      images.push(img);
+    }
+
+    function renderFrame(index) {
+      if (!images[index] || !images[index].complete) return;
+      const img = images[index];
+      
+      const dpr = window.devicePixelRatio || 1;
+      canvas.width = window.innerWidth * dpr;
+      canvas.height = window.innerHeight * dpr;
+      
+      canvas.style.width = `${window.innerWidth}px`;
+      canvas.style.height = `${window.innerHeight}px`;
+      
+      ctx.scale(dpr, dpr);
+      
+      ctx.fillStyle = '#050505';
+      ctx.fillRect(0, 0, window.innerWidth, window.innerHeight);
+      
+      const scale = Math.min(window.innerWidth / img.width, window.innerHeight / img.height);
+      const x = (window.innerWidth / 2) - (img.width / 2) * scale;
+      const y = (window.innerHeight / 2) - (img.height / 2) * scale;
+      ctx.drawImage(img, x, y, img.width * scale, img.height * scale);
+    }
+
+    // 4. Initialization & GSAP Timelines
+    function initExperience() {
+      renderFrame(0);
+      
+      gsap.to("#preloader", { yPercent: -100, duration: 1.2, ease: "power4.inOut", delay: 0.2 });
+      
+      gsap.to("#hero-brand", {
+        opacity: 0,
+        y: -150,
+        scrollTrigger: { trigger: "#sequence-container", start: "top top", end: "15% top", scrub: true }
+      });
+
+      const seq = { frame: 0 };
+      gsap.to(seq, {
+        frame: images.length - 1,
+        snap: "frame",
+        ease: "none",
+        scrollTrigger: { trigger: "#sequence-container", start: "top top", end: "bottom bottom", scrub: 1 },
+        onUpdate: () => renderFrame(seq.frame)
+      });
+
+      const beats = [
+        { id: "#beat-1", start: "10%", end: "30%" },
+        { id: "#beat-2", start: "40%", end: "60%" },
+        { id: "#beat-3", start: "70%", end: "90%" }
+      ];
+      beats.forEach(beat => {
+        gsap.timeline({ scrollTrigger: { trigger: "#sequence-container", start: `${beat.start} top`, end: `${beat.end} top`, scrub: true } })
+          .to(beat.id, { opacity: 1, y: -40, duration: 0.5 })
+          .to(beat.id, { opacity: 0, y: -80, duration: 0.5 });
+      });
+
+      // Bento Grid Entrance
+      gsap.from(".bento-card", {
+        scrollTrigger: { trigger: ".bento-section", start: "top 75%" },
+        y: 80, opacity: 0, duration: 1.2, stagger: 0.1, ease: "power4.out"
+      });
+
+      // Brand Story Entrance
+      gsap.from(".story-container", {
+        scrollTrigger: { trigger: ".brand-story", start: "top 80%" },
+        y: 50, opacity: 0, duration: 1.2, ease: "power3.out"
+      });
+
+      // Reviews Entrance
+      gsap.from(".review-card", {
+        scrollTrigger: { trigger: ".reviews-section", start: "top 80%" },
+        y: 50, opacity: 0, duration: 1, stagger: 0.2, ease: "power3.out"
+      });
+    }
+
+    window.addEventListener('resize', () => {
+      const st = ScrollTrigger.getById("sequence-container");
+      renderFrame(st ? Math.floor(st.progress * (images.length - 1)) : 0);
+    });
+  </script>
+</body>
+</html>
